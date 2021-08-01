@@ -10,6 +10,8 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
+WindowInfo GWindowInfo;
+
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -41,8 +43,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
+    GWindowInfo.Width = 800;
+    GWindowInfo.Height = 600;
+    GWindowInfo.bWindowed = true;
+
     unique_ptr<Game> game = make_unique<Game>();
-    game->Init();
+    game->Init(GWindowInfo);
 
     // Main message loop:
     while (true)
@@ -118,6 +124,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+
+    GWindowInfo.Hwnd = hWnd;
 
     return TRUE;
 }

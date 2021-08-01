@@ -30,6 +30,9 @@ using namespace Microsoft::WRL;
 #pragma comment(lib, "dxguid")
 #pragma comment(lib, "d3dcompiler")
 
+// Definition
+#define SWAP_CHAIN_BUFFER_COUNT 2
+
 // Type Definition
 using int8      = __int8;
 using int16     = __int16;
@@ -43,3 +46,15 @@ using Vec2      = XMFLOAT2;
 using Vec3      = XMFLOAT3;
 using Vec4      = XMFLOAT4;
 using Matrix    = XMMATRIX;
+
+// Struct
+struct WindowInfo
+{
+    HWND    Hwnd;       //출력 윈도우 핸들
+    int32   Width;      //가로
+    int32   Height;     //세로
+    bool    bWindowed;   //창모드인가
+};
+
+// Extern
+extern unique_ptr<class Engine> GEngine;
