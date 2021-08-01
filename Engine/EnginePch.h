@@ -33,6 +33,11 @@ using namespace Microsoft::WRL;
 // Definition
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
+// Engine Macro
+#define DEVICE              GEngine->GetDevice()->GetDevice()
+#define CMD_LIST            GEngine->GetCmdQueue()->GetCmdList()
+#define ROOT_SIGNATURE      GEngine->GetRootSignature()->GetSignature()
+
 // Type Definition
 using int8      = __int8;
 using int16     = __int16;
@@ -54,6 +59,12 @@ struct WindowInfo
     int32   Width;      //가로
     int32   Height;     //세로
     bool    bWindowed;   //창모드인가
+};
+
+struct Vertex
+{
+    Vec3 Pos;
+    Vec4 Color;
 };
 
 // Extern

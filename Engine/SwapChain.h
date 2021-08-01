@@ -24,18 +24,27 @@
 class SwapChain
 {
 public:
-    void Init(const WindowInfo& Info, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue);
+    void Init(const WindowInfo& Info, ComPtr<ID3D12Device> Device, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue);
     void Present();
     void SwapIndex();
 
     ComPtr<IDXGISwapChain> GetSwapChain() { return _SwapChain; }
-    ComPtr<ID3D12Resource> GetRenderTarget(int32 index) { return _RenderTargets[index]; }
+    ComPtr<ID3D12Resource> GetRenderTarget(int32 index) { return _RtvBuffer[index]; }
 
-    uint32 GetCurrentBackBufferIndex() { return _BackBufferIndex; }
-    ComPtr<ID3D12Resource> GetCurrentBackBufferResource() { return _RenderTargets[_BackBufferIndex]; }
+    ComPtr<ID3D12Resource> GetBackRTVBuffer() { return _RtvBuffer[_BackBufferIndex]; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetBackRTV() {return _RtvHandle[_BackBufferIndex]; }
 
 private:
-    ComPtr<IDXGISwapChain>  _SwapChain;
-    ComPtr<ID3D12Resource>  _RenderTargets[SWAP_CHAIN_BUFFER_COUNT];
-    uint32                  _BackBufferIndex = 0;
+    void CreateSwapChain(const WindowInfo& Info, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue);
+    void CreateRTV(ComPtr<ID3D12Device> Device);
+
+private:
+    ComPtr<IDXGISwapChain>          _SwapChain;
+
+    ComPtr<ID3D12Resource>          _RtvBuffer[SWAP_CHAIN_BUFFER_COUNT];
+    ComPtr<ID3D12DescriptorHeap>    _RtvHeap;
+    D3D12_CPU_DESCRIPTOR_HANDLE     _RtvHandle[SWAP_CHAIN_BUFFER_COUNT];
+
+    uint32      _BackBufferIndex = 0;
 };

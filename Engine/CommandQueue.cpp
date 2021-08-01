@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "CommandQueue.h"
 
-#include "DescriptorHeap.h"
 #include "SwapChain.h"
 
 CommandQueue::~CommandQueue()
@@ -9,10 +8,9 @@ CommandQueue::~CommandQueue()
     ::CloseHandle(_FenceEvent);
 }
 
-void CommandQueue::Init(ComPtr<ID3D12Device> Device, shared_ptr<SwapChain> SwapChain, shared_ptr<DescriptorHeap> DescHeap)
+void CommandQueue::Init(ComPtr<ID3D12Device> Device, shared_ptr<SwapChain> SwapChain)
 {
     _SwapChain = SwapChain;
-    _DescHeap = DescHeap;
 
     D3D12_COMMAND_QUEUE_DESC QueueDesc = {};
     QueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -66,7 +64,7 @@ void CommandQueue::RenderBegin(const D3D12_VIEWPORT* Viewport, const D3D12_RECT*
     _CmdList->Reset(_CmdAlloc.Get(), nullptr);
 
     D3D12_RESOURCE_BARRIER Barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        _SwapChain->GetCurrentBackBufferResource().Get(),
+        _SwapChain->GetBackRTVBuffer().Get(),
         D3D12_RESOURCE_STATE_PRESENT, // 화면 출력
         D3D12_RESOURCE_STATE_RENDER_TARGET); // 외주 결과물
 
@@ -77,7 +75,7 @@ void CommandQueue::RenderBegin(const D3D12_VIEWPORT* Viewport, const D3D12_RECT*
     _CmdList->RSSetScissorRects(1, Rect);
 
     // Specify the buffers we are going to render to.
-    D3D12_CPU_DESCRIPTOR_HANDLE BackBufferView = _DescHeap->GetBackBufferView();
+    D3D12_CPU_DESCRIPTOR_HANDLE BackBufferView = _SwapChain->GetBackRTV();
     _CmdList->ClearRenderTargetView(BackBufferView, Colors::LightSteelBlue, 0, nullptr);
     _CmdList->OMSetRenderTargets(1, &BackBufferView, FALSE, nullptr);
 }
@@ -85,7 +83,7 @@ void CommandQueue::RenderBegin(const D3D12_VIEWPORT* Viewport, const D3D12_RECT*
 void CommandQueue::RenderEnd()
 {
     D3D12_RESOURCE_BARRIER Barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        _SwapChain->GetCurrentBackBufferResource().Get(),
+        _SwapChain->GetBackRTVBuffer().Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, // 외주 결과물
         D3D12_RESOURCE_STATE_PRESENT); // 화면 출력
 

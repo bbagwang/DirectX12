@@ -1,7 +1,27 @@
 #include "pch.h"
 #include "SwapChain.h"
+#include "Engine.h"
 
-void SwapChain::Init(const WindowInfo& Info, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue)
+
+void SwapChain::Init(const WindowInfo& Info, ComPtr<ID3D12Device> Device, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue)
+{
+
+    CreateSwapChain(Info, Dxgi, CmdQueue);
+    CreateRTV(Device);
+}
+
+void SwapChain::Present()
+{
+    // Present The Frame
+    _SwapChain->Present(0, 0);
+}
+
+void SwapChain::SwapIndex()
+{
+    _BackBufferIndex = (_BackBufferIndex + 1) % SWAP_CHAIN_BUFFER_COUNT;
+}
+
+void SwapChain::CreateSwapChain(const WindowInfo& Info, ComPtr<IDXGIFactory> Dxgi, ComPtr<ID3D12CommandQueue> CmdQueue)
 {
     // 이전에 만든 정보 날린다
     _SwapChain.Reset();
@@ -27,17 +47,33 @@ void SwapChain::Init(const WindowInfo& Info, ComPtr<IDXGIFactory> Dxgi, ComPtr<I
 
     for (int32 i = 0; i < SWAP_CHAIN_BUFFER_COUNT; i++)
     {
-        _SwapChain->GetBuffer(i, IID_PPV_ARGS(&_RenderTargets[i]));
+        _SwapChain->GetBuffer(i, IID_PPV_ARGS(&_RtvBuffer[i]));
     }
 }
 
-void SwapChain::Present()
+void SwapChain::CreateRTV(ComPtr<ID3D12Device> Device)
 {
-    // Present The Frame
-    _SwapChain->Present(0, 0);
-}
+    // [서술자 힙]으로 RTV 생성
+    // DX11의 RTV(RenderTargetView), DSV(DepthStencilView), 
+    // CBV(ConstantBufferView), SRV(ShaderResourceView), UAV(UnorderedAccessView)를 전부!
 
-void SwapChain::SwapIndex()
-{
-    _BackBufferIndex = (_BackBufferIndex + 1) % SWAP_CHAIN_BUFFER_COUNT;
+    int32 RtvHeapSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    D3D12_DESCRIPTOR_HEAP_DESC RtvDesc;
+    RtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    RtvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT;
+    RtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    RtvDesc.NodeMask = 0;
+
+    // 같은 종류의 데이터끼리 배열로 관리
+    // RTV 목록 : [ ] [ ]
+    Device->CreateDescriptorHeap(&RtvDesc, IID_PPV_ARGS(&_RtvHeap));
+
+    D3D12_CPU_DESCRIPTOR_HANDLE RtvHeapBegin = _RtvHeap->GetCPUDescriptorHandleForHeapStart();
+
+    for (int i = 0; i < SWAP_CHAIN_BUFFER_COUNT; i++)
+    {
+        _RtvHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(RtvHeapBegin, i * RtvHeapSize);
+        Device->CreateRenderTargetView(_RtvBuffer[i].Get(), nullptr, _RtvHandle[i]);
+    }
 }
